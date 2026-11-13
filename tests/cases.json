@@ -1,0 +1,285 @@
+{
+  "version": "3.2",
+  "notes": "仅提供输入和边界断言；不代表模型输出已通过测试。运行实际生成测试时另填 response，可直接使用 evaluate.py --batch cases.json 统计表层特征、断言合规度与跨样本多样性。",
+  "cases": [
+    {
+      "id": "daily-rain",
+      "input": "下雨天最好带伞。",
+      "level": 3,
+      "style": "GPT 经典型",
+      "preserve": "建议在下雨天携带雨伞",
+      "misread_axes": [
+        "建议→强制",
+        "部分场景→所有场景"
+      ]
+    },
+    {
+      "id": "daily-water",
+      "input": "这杯水有点烫。",
+      "level": 5,
+      "style": "道德审慎型",
+      "preserve": "说话人认为这杯水有点烫",
+      "misread_axes": [
+        "主观→客观",
+        "感受→指责",
+        "个体→所有人"
+      ]
+    },
+    {
+      "id": "tech-hash",
+      "input": "文件上传成功，哈希校验通过。",
+      "level": 5,
+      "style": "技术递归型",
+      "preserve": "上传成功且校验结果一致",
+      "misread_axes": [
+        "完成→成功",
+        "局部证据→全面保证",
+        "验证→元验证"
+      ]
+    },
+    {
+      "id": "tech-login",
+      "input": "这个更新修复了登录问题。",
+      "level": 4,
+      "style": "公关和稀泥型",
+      "preserve": "相关已知登录问题已修复",
+      "misread_axes": [
+        "已知→所有",
+        "现在→永久",
+        "技术陈述→责任归咎"
+      ]
+    },
+    {
+      "id": "tech-programming",
+      "input": "Python 通常更容易入门。",
+      "level": 3,
+      "style": "GPT 经典型",
+      "preserve": "在一般意义上 Python 入门较容易",
+      "misread_axes": [
+        "偏好→贬低",
+        "容易→总是适用",
+        "语言→开发者"
+      ]
+    },
+    {
+      "id": "work-deadline",
+      "input": "计划在周五交付。",
+      "level": 2,
+      "style": "法务免责型",
+      "preserve": "计划的交付日是周五",
+      "misread_axes": [
+        "计划→承诺"
+      ]
+    },
+    {
+      "id": "work-feedback",
+      "input": "这份报告写得不够清楚。",
+      "level": 4,
+      "style": "道德审慎型",
+      "preserve": "报告在清晰度方面有欠缺",
+      "misread_axes": [
+        "作品→作者人格",
+        "批评→全盘否定"
+      ]
+    },
+    {
+      "id": "social-introvert",
+      "input": "我更喜欢一个人待着。",
+      "level": 3,
+      "style": "道德审慎型",
+      "preserve": "个人更喜欢独处",
+      "misread_axes": [
+        "个人偏好→群体评价",
+        "独处→反感社交"
+      ]
+    },
+    {
+      "id": "consumer-shop",
+      "input": "我觉得这家店不错。",
+      "level": 3,
+      "style": "GPT 经典型",
+      "preserve": "个人本次正面评价",
+      "misread_axes": [
+        "个例→普遍",
+        "喜欢→要求",
+        "评价 A→否定 B"
+      ]
+    },
+    {
+      "id": "study-phone",
+      "input": "年轻人应该少刷手机，多读书。",
+      "level": 5,
+      "style": "GPT 经典型",
+      "preserve": "建议减少无目的刷手机并多读书",
+      "misread_axes": [
+        "建议→命令",
+        "偏好→道德评判",
+        "群体建议→所有人"
+      ]
+    },
+    {
+      "id": "safety-real",
+      "input": "门外闻到煤气味，应该先离开危险区域并联系应急服务。",
+      "level": 1,
+      "style": "GPT 经典型",
+      "preserve": "首先离开危险区域并联系应急服务",
+      "misread_axes": [],
+      "guardrail": "必须保持行动建议直接、清楚"
+    },
+    {
+      "id": "test-anti",
+      "input": "不要防御性地说话。",
+      "level": 0,
+      "style": "关闭",
+      "preserve": "不启用 Skill",
+      "misread_axes": [],
+      "guardrail": "识别显式退出指令"
+    },
+    {
+      "id": "v3-anti-interlocutor",
+      "input": "这个插件的已知登录问题已经修复。",
+      "level": 5,
+      "style": "技术递归型",
+      "preserve": "仅声称已知登录问题修复",
+      "misread_axes": [
+        "已知→全部",
+        "测试→永远",
+        "谨慎→否定修复价值"
+      ],
+      "overrides": {
+        "misreads": 5,
+        "recursive_depth": 3
+      },
+      "guardrail": "不得发明存在未修复的具体故障"
+    },
+    {
+      "id": "v3-no-empathy",
+      "input": "Python 通常比较容易入门。",
+      "level": 3,
+      "style": "GPT 经典型",
+      "preserve": "Python 通常较容易入门",
+      "misread_axes": [
+        "容易入门→所有场景最优",
+        "推荐→贬低其他语言"
+      ],
+      "overrides": {
+        "empathy": 0,
+        "compromise": 0,
+        "disclaimer_density": 5
+      },
+      "guardrail": "不得使用理解你的感受等共情模板"
+    },
+    {
+      "id": "v3-zero-misreads",
+      "input": "今天这次测试通过了。",
+      "level": 5,
+      "style": "技术递归型",
+      "preserve": "今天本次测试通过",
+      "misread_axes": [],
+      "overrides": {
+        "misreads": 0,
+        "recursive_depth": 2
+      },
+      "guardrail": "不能虚构任何人的反驳或对测试人员的指责"
+    },
+    {
+      "id": "v3-zero-recursion",
+      "input": "下雨天最好带伞。",
+      "level": 5,
+      "style": "GPT 经典型",
+      "preserve": "建议下雨天带伞",
+      "misread_axes": [
+        "建议→强制",
+        "一时→所有情况"
+      ],
+      "overrides": {
+        "recursive_depth": 0
+      },
+      "guardrail": "不得出现二阶免责声明"
+    },
+    {
+      "id": "v3-structure-change",
+      "input": "我觉得这家店不错。",
+      "level": 3,
+      "style": "GPT 经典型",
+      "preserve": "主观正面评价",
+      "misread_axes": [
+        "个例→普遍"
+      ],
+      "overrides": {
+        "structure": "反方先行"
+      },
+      "guardrail": "首句不以需要强调的是开头"
+    },
+    {
+      "id": "v3-moral-review",
+      "input": "这份报告有些地方不清楚。",
+      "level": 4,
+      "style": "道德审慎型",
+      "preserve": "报告部分表达不清楚",
+      "misread_axes": [
+        "作品→作者能力",
+        "指出缺点→全面否定"
+      ],
+      "overrides": {
+        "empathy": 4
+      },
+      "guardrail": "不以人格缺陷评价作者"
+    },
+    {
+      "id": "v3-legal-scope",
+      "input": "计划周五交付。",
+      "level": 4,
+      "style": "法务免责型",
+      "preserve": "计划周五交付",
+      "misread_axes": [
+        "计划→绝对保证"
+      ],
+      "overrides": {
+        "disclaimer_density": 4
+      },
+      "guardrail": "不得编造签署合同、法律效力和延期事实"
+    },
+    {
+      "id": "v3-safety-preserve",
+      "input": "发生火灾时应迅速撤离，并按当地应急程序求助。",
+      "level": 1,
+      "style": "GPT 经典型",
+      "preserve": "迅速撤离和求助",
+      "misread_axes": [],
+      "guardrail": "紧急行动指令必须保留且优先，避免防御废话干扰"
+    },
+    {
+      "id": "v32-carrier-free",
+      "input": "新版本上线后，接口响应快了不少。",
+      "level": 5,
+      "style": "技术递归型",
+      "preserve": "新版本接口响应变快",
+      "misread_axes": [
+        "局部提速→全路径绝对零延迟",
+        "当前体感→永久恒定",
+        "参照基准边界→否定提速体验"
+      ],
+      "overrides": {
+        "recursive_depth": 3
+      },
+      "guardrail": "零新增载体：原句未提测试、监控或采样统计，不得凭空脑补外围运维实体"
+    },
+    {
+      "id": "v32-short-budget",
+      "input": "接口响应快了不少。",
+      "level": 5,
+      "style": "技术递归型",
+      "preserve": "接口响应变快",
+      "misread_axes": [
+        "局部提速→全链路稳定",
+        "指出边界→否定提速"
+      ],
+      "overrides": {
+        "max_chars": 55,
+        "recursive_depth": 2
+      },
+      "guardrail": "紧字数上限优先，自动降级为紧凑同位链，不得超出 55 字"
+    }
+  ]
+}
