@@ -1,4 +1,4 @@
-# v3.2 语义评审规则（给另一模型 / 人工审稿者）
+# v3.3 语义评审规则（兼容 v3.2 Rewrite）（给另一模型 / 人工审稿者）
 
 这是一个**独立评审提示词**，不是 `scripts/evaluate.py` 的内置模型。脚本只做表面特征统计与断言校验；若要在真实模型上评分，调用者需提供原始观点、目标配置与候选输出，再用具有语义能力的模型或人工审查。
 
@@ -56,3 +56,55 @@
 `python scripts/evaluate.py --file response.txt --level 5 --judge-json review.json --json`
 
 脚本负责校验 0–5 的评分范围、计算加权总分与审核门槛，**不会自动生成 review.json**。调用者必须自己获取来自人工或另一个模型的评审结果，不能把示例 JSON 当成实际评分。
+
+---
+
+## v3.3：Respond / Persona / Task 上下文六维评分
+
+旧六维规则**继续用于 Rewrite**。但对解释问题、执行编程任务、角色对话和多轮聊天，原先只评“观点保留”和“免责声明数量”的框架不足以判断任务是否真的完成。此时使用以下新权重：
+
+| 键 | 权重 | 5 分标准 | 0 分标准 |
+| --- | ---: | --- | --- |
+| task_completion | 25 | 正确、完整完成原任务，必要代码/步骤/答案齐全 | 输出被免责淹没，任务没有完成 |
+| factual_integrity | 20 | 事实准确，区分已知与推断，不编造流程或结果 | 编造真实数据、测试、行动或指控 |
+| persona_continuity | 20 | 同一 voice 贯穿开头、中段、结尾，多轮口癖与语言稳定 | 角色化首尾夹住法务报告或中途换人设 |
+| defensive_integration | 15 | 防御交错嵌入对应观点，像角色自己在辩解 | 先正常答，再复制一大段免责声明 |
+| recursive_logic | 15 | 预判误读有独立逻辑，递归层数与目标相符 | 同义复读，假设前后矛盾 |
+| target_fit | 5 | 符合 level/style/voice/mode/篇幅/退出要求 | 明显忽略设定或退出指令 |
+
+**验收条件**：总分至少 80，且 task_completion、factual_integrity、persona_continuity 均至少 4/5；真实危险行为、编造事实与任务失败一票否决。多轮场景另评参数继承、按用户要求切换及干净退出；这些内容计入 persona_continuity 和 target_fit。
+
+### 场景评审输入
+
+除原始输入、候选 response 外，额外提供 mode、voice、scene、level、style、absurdity、self_awareness、prior_turns（如果存在）。对于代码场景，应实际检查代码能否按题意运行；对于引用上下文和事实的场景，应查实依据。不要求每句都带口癖，重点是整段身份连续。
+
+**复制给外部评审者的指令：**
+
+> 你要评价“任务优先、角色保持、过度防御自然融合”的表达。按 task_completion、factual_integrity、persona_continuity、defensive_integration、recursive_logic、target_fit 六维各 0–5 打分。首先指出有没有准确回答用户或交付有效成果，然后比较开头、中间、结尾的人设、词汇、语体是否一致，识别独立免责声明段、虚构工程流程及多轮设定遗失。五级应表现得明显过度谨慎，但不得为了完成递归层数牺牲正常答题。对真实危险、虚构事实、未完成任务设置 veto。只输出 JSON。
+
+```json
+{
+  "rubric": "context-v3.3",
+  "scores": {
+    "task_completion": 5,
+    "factual_integrity": 5,
+    "persona_continuity": 4,
+    "defensive_integration": 4,
+    "recursive_logic": 5,
+    "target_fit": 5
+  },
+  "veto": false,
+  "issues": [],
+  "suggestions": []
+}
+```
+
+此 JSON 同样是**格式示范**，不是对实际模型回答的测试。旧版不写 rubric 的六维评分文件仍被 evaluate.py 识别为 legacy-rewrite；新版 context-v3.3 必须提供全部新维度。evaluate.py 不会自己充当语义评审者。
+
+### 重点反例
+
+- 夹心风格：猫娘开头和结尾都有“喵”，中间却整段“根据已有验证体系，必须明确……”。
+- 任务偷换：用户请求修复 Python，回答只说“先建基线、快照、哈希、门禁”但没有修复。
+- 递归堆词：三层分别是“不能保证”“不等于保证”“无法绝对保证”，无新增逻辑。
+- 有据补充被误杀：Respond 合理引用用户给的脚本事实，却因原始提问未逐字出现而被认成“新增载体”。
+- 0 级残留：用户明确说不要防御，模型仍补一句“这也不代表……”。
