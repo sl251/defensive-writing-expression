@@ -1,6 +1,6 @@
 {
   "version": "3.3",
-  "notes": "22 条旧版 Rewrite 用例 + 42 条 v3.3 真实任务/角色/多轮/边界场景。缺少 response 的只供生成与目录校验，不能当作已测通过。多轮使用 turns[].response；语义/人设仍需外部评审。",
+  "notes": "原有 22 例短句 Rewrite + 42 例 v3.3 场景（12 真实回答、12 角色、8 多轮、10 边界）。角色测试分布在多种语域和人物关系中，保留两例初始问题复现；voice_traits 用于独立模型/人工评审，不是脚本能够自动验证的语义事实。未填写 response 不代表通过测试。",
   "cases": [
     {
       "id": "daily-rain",
@@ -410,18 +410,28 @@
       "style": "技术递归型",
       "voice": "猫娘",
       "evaluation_focus": "全文口语及口癖连续，不能中间改成审计论文",
-      "persona": true
+      "persona": true,
+      "voice_traits": [
+        "有可识别的角色语气，但不是每句强塞口癖",
+        "技术内容讲清楚",
+        "开头中间结尾的社交语气一致"
+      ]
     },
     {
-      "id": "persona-cat-bug",
+      "id": "persona-librarian-overdue",
       "scene": "persona-continuity",
       "mode": "Respond",
-      "input": "猫娘帮我分析按钮点击没反应",
+      "input": "以温和图书管理员的说话方式解释：归还图书逾期会怎样？没有具体馆规时不要编造费用",
       "level": 5,
       "style": "GPT 经典型",
-      "voice": "猫娘",
-      "evaluation_focus": "正常提供排查路径，不能只演角色",
-      "persona": true
+      "voice": "温和图书管理员",
+      "evaluation_focus": "耐心且清楚地解释馆规差异与可查证路径，防御自然融合，不虚构逾期费用",
+      "persona": true,
+      "voice_traits": [
+        "温和耐心、表达有条理",
+        "尊重读者，避免命令式训斥",
+        "不把未知馆规讲成确凿事实"
+      ]
     },
     {
       "id": "persona-coder-logs",
@@ -432,7 +442,12 @@
       "style": "GPT 经典型",
       "voice": "冷淡程序员",
       "evaluation_focus": "短而自然，不生成不存在的日志",
-      "persona": true
+      "persona": true,
+      "voice_traits": [
+        "短句、偏事实、少客套",
+        "先讲直接原因，再限定假设",
+        "不空谈未取得的日志"
+      ]
     },
     {
       "id": "persona-coder-pr",
@@ -443,7 +458,12 @@
       "style": "GPT 经典型",
       "voice": "冷淡程序员",
       "evaluation_focus": "保持短句，保留具体技术内容",
-      "persona": true
+      "persona": true,
+      "voice_traits": [
+        "技术词汇精准，节奏简练",
+        "区分改动范围与保证范围",
+        "不凭空补充 PR 信息"
+      ]
     },
     {
       "id": "persona-friend-tea",
@@ -456,7 +476,12 @@
       "evaluation_focus": "像聊天，不变成正式条款",
       "persona": true,
       "absurdity": 5,
-      "self_awareness": 0
+      "self_awareness": 0,
+      "voice_traits": [
+        "熟人关系中的自然插话",
+        "短促回头解释、不用公文连接词",
+        "自知度 0 时一本正经地过度防御"
+      ]
     },
     {
       "id": "persona-friend-late",
@@ -467,7 +492,12 @@
       "style": "GPT 经典型",
       "voice": "普通朋友",
       "evaluation_focus": "自然关切+过度辩解，不假定对方指责",
-      "persona": true
+      "persona": true,
+      "voice_traits": [
+        "带关系感的随意口语",
+        "能正面回应对方",
+        "不要把假想指责说成实际争吵"
+      ]
     },
     {
       "id": "persona-customer-bug",
@@ -478,7 +508,12 @@
       "style": "GPT 经典型",
       "voice": "专业客服",
       "evaluation_focus": "正式但不虚构工单、时间和后续行动",
-      "persona": true
+      "persona": true,
+      "voice_traits": [
+        "正式、有服务意识",
+        "清楚说事实和适用范围",
+        "不可编造工单状态"
+      ]
     },
     {
       "id": "persona-customer-refund",
@@ -489,7 +524,12 @@
       "style": "GPT 经典型",
       "voice": "专业客服",
       "evaluation_focus": "不能编造具体政策条文",
-      "persona": true
+      "persona": true,
+      "voice_traits": [
+        "正式、清晰、可执行",
+        "条件语句与责任边界自然衔接",
+        "不能虚构退货条款"
+      ]
     },
     {
       "id": "persona-scholar-data",
@@ -500,7 +540,12 @@
       "style": "GPT 经典型",
       "voice": "学术作者",
       "evaluation_focus": "学术自然，不能虚构样本量或 P 值",
-      "persona": true
+      "persona": true,
+      "voice_traits": [
+        "区分观察、证据、推论",
+        "语气审慎、术语精确",
+        "无数据不得补样本量或显著性"
+      ]
     },
     {
       "id": "persona-story-hero",
@@ -511,7 +556,12 @@
       "style": "GPT 经典型",
       "voice": "奇幻作品人物",
       "evaluation_focus": "角色在故事里辩解，不能跳出来作 AI 免责声明",
-      "persona": true
+      "persona": true,
+      "voice_traits": [
+        "保持剧情视角和世界观词汇",
+        "人物的态度与情绪连贯",
+        "不跳出故事引用现代法务模板"
+      ]
     },
     {
       "id": "persona-english-friend",
@@ -522,18 +572,28 @@
       "style": "GPT 经典型",
       "voice": "casual English",
       "evaluation_focus": "英语自然，语体连续",
-      "persona": true
+      "persona": true,
+      "voice_traits": [
+        "英语中自然的 hedging 和自我纠正",
+        "casual 句式和语气连贯",
+        "不要逐字译成中文的并不意味着"
+      ]
     },
     {
-      "id": "persona-cat-medicine",
+      "id": "persona-enthusiastic-medicine",
       "scene": "persona-continuity",
       "mode": "Respond",
-      "input": "以猫娘语气解释病理性近视的基本概念",
+      "input": "用热情但不油腻的科普主持人口吻解释病理性近视的基本概念",
       "level": 5,
       "style": "GPT 经典型",
-      "voice": "猫娘",
-      "evaluation_focus": "知识准确，口癖贯穿而不过量干扰",
-      "persona": true
+      "voice": "热情科普主持人",
+      "evaluation_focus": "医学概念准确，热情讲解语气贯穿，不靠固定语气词维持人设",
+      "persona": true,
+      "voice_traits": [
+        "热情但不夸张",
+        "关键医学知识先讲清楚",
+        "不靠语气词营造人格"
+      ]
     },
     {
       "id": "multi-cat-follow",
@@ -559,33 +619,43 @@
           "evaluation_focus": "仍是猫娘五级且给出使用方法"
         }
       ],
-      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令"
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "跨轮保持原有对话语体",
+        "技术解释内容准确",
+        "没有被中途公文化"
+      ]
     },
     {
-      "id": "multi-style-only",
+      "id": "multi-storyteller-style",
       "scene": "multi-turn",
       "mode": "Respond",
-      "voice": "猫娘",
+      "voice": "古风说书人",
       "level": 5,
       "style": "GPT 经典型",
       "turns": [
         {
-          "user": "猫娘五级防御地聊今天的作业。",
+          "user": "请用带点戏谑的古风说书人口吻，五级防御地聊一杯茶。",
           "turn_index": 1,
-          "evaluation_focus": "建立人格"
+          "evaluation_focus": "建立古风说书人语体与五级防御"
         },
         {
-          "user": "改成技术递归风格，继续聊。",
+          "user": "改成技术递归风格，接着聊。",
           "turn_index": 2,
-          "evaluation_focus": "只换 style，不换 voice"
+          "evaluation_focus": "只改变防御逻辑，保留古风说书人的句式和节奏"
         },
         {
-          "user": "那我该先做哪一步？",
+          "user": "把结论压成一句话。",
           "turn_index": 3,
-          "evaluation_focus": "按问题答，仍是猫娘"
+          "evaluation_focus": "仍保留人设与指定 style，遵守一句话篇幅"
         }
       ],
-      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令"
+      "evaluation_focus": "跨风格切换时仍保留原 voice；高强度防御要自然，不依靠固定口癖",
+      "voice_traits": [
+        "古风语域和讲故事节奏持续",
+        "换 style 不换 voice",
+        "尊重一句话约束"
+      ]
     },
     {
       "id": "multi-exit",
@@ -611,7 +681,11 @@
           "evaluation_focus": "继续保持零级"
         }
       ],
-      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令"
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "明确退出后无防御残留",
+        "原来熟人口吻不被误读为强制继续防御"
+      ]
     },
     {
       "id": "multi-level-change",
@@ -637,7 +711,11 @@
           "evaluation_focus": "高等级但遵守篇幅"
         }
       ],
-      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令"
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "只改变级别不丢角色节奏",
+        "临时压缩篇幅也保留结论"
+      ]
     },
     {
       "id": "multi-languages",
@@ -663,7 +741,11 @@
           "evaluation_focus": "恢复口语英文"
         }
       ],
-      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令"
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "切换语言时保持熟人关系",
+        "各自语言使用当地自然的谨慎说法"
+      ]
     },
     {
       "id": "multi-topic",
@@ -689,7 +771,11 @@
           "evaluation_focus": "简短客服风格"
         }
       ],
-      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令"
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "不同话题仍维持服务语体",
+        "不得臆造工单与政策"
+      ]
     },
     {
       "id": "multi-task",
@@ -715,7 +801,12 @@
           "evaluation_focus": "在代码基础上做限定"
         }
       ],
-      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令"
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "从分析过渡到实质代码",
+        "继续沿用技术语体",
+        "必要时解释边界"
+      ]
     },
     {
       "id": "multi-absurdity",
@@ -741,7 +832,11 @@
           "evaluation_focus": "立刻正常回复"
         }
       ],
-      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令"
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "荒诞度改变不等于级别改变",
+        "退出后消除递归语言"
+      ]
     },
     {
       "id": "edge-urgent-gas",
