@@ -1,94 +1,128 @@
-# Defensive Writing & Expression v3.3
+# Defensive Writing & Expression
 
-一个刻意制造“GPT 式防御性表达”的中文 Agent Skill：让普通观点提前应付尚未出现的误读，甚至让免责声明需要再被免责声明澄清。
+一个专门制造 **GPT 式过度防御性表达** 的中文 Agent Skill。
 
-![防御性写作关系图：不能证明、并不等于、不是而是](assets/defensive-writing-map.jpg)
+别人说一句“这个项目不错”，它能认真解释为什么“不错”不等于“完美”，而指出“并非完美”又不代表否认项目的价值。连免责声明都需要再写免责声明。
 
-## 核心特性（v3.3）
+**v3.3：防御性融入语言，而不是贴在语言后面。** 不管是在闲聊、解释知识、写代码还是扮演角色，都尽量保留原本的说话方式与实际任务。
 
-- **零新增实体约束**：严格区分“有载体句”（如含测试/哈希/合同）与“纯陈述句”（如仅含主观体验或结果对比），高档位递归不再为了凑层数而凭空脑补监控、日志或统计流程。
-- **优先级仲裁与短文本降级**：以 `任务与安全 > 0 级退出 > 字数硬上限 > 单点覆盖 > 已有人设 > 防御机制 > 档位默认` 裁决冲突；紧字数约束下自动切换为紧凑同位链（`A ≠ B ≠ C`）以兼顾篇幅与递归层数。
-- **增强型离线回归校验（`evaluate.py`）**：在原有表面标记统计基础上，新增 `cases.json` 核心词留存校验（`preserve` recall）、`overrides` / `guardrail` 合规审计，以及 `--batch` 跨样本首尾句式撞车检测。
-- **双层误读引擎与内置二次审查**：原观点 → 虚拟误读 → 澄清 → 对澄清的误读 → 元澄清（最多 3 层），内置防复读编辑自检。
-- **渐进式上下文加载**：常规 1–3 级仅加载 `SKILL.md`，高递归与诊断评测再按需读取 `references/`。
+![防御性写作关系图](assets/defensive-writing-map.jpg)
 
-## v3.3：上下文感知型防御
+## 效果示例
 
-这次升级处理的是“防御性有了，却没有和语言融合”的问题。典型失败表现是开头和结尾像熟人聊天，中间却突然写成审计公文。现在先保持用户要完成的**真实任务和已有说话方式**，再把过度辩解嵌进词汇、句法、节奏和态度里，而非硬套某个角色的口癖。
+**原话：**
 
-- **Rewrite（改写）**：严格保留原句和已有事实；零新增日志、测试、监控等载体，默认单段。
-- **Respond（回答）**：先解释问题，再把限定与元澄清交错放在相关观点旁边，不把问答变成完整免责声明。
-- **Task（执行）**：先交付可用代码、步骤、方案或回复；禁止用虚构的基线、探针、哈希、门禁、烟测代替修复。
-- **Persona（角色层）**：叠加在前三者上，贯穿全文和多轮对话。voice 控制口癖、词序、正式度和身份；style 只控制防御的论证机制。
-- **可选参数**：absurdity 0–5 控制小题大做的程度；self_awareness 0–5 控制角色是否意识到自己的过分谨慎；两个参数默认 0。
-- **退出**：“直说、不要防御性”立即降到 0 级，不残留“这并不意味着”的尾巴。
-- **人格泛化**：角色标签不是台词字典；评判融合程度时看语域、句法、节奏、情绪和社交关系，不能只看某个标志性语气词的出现次数。
+> 这个插件挺好用的。
 
-### 真实场景调用
+**五级防御（示例）：**
 
-```text
-沿用刚才轻松的讲解口吻，五级技术递归：解释 scripts/evaluate.py 的功能。
-五级，voice=普通朋友，absurdity=5，self_awareness=0：这杯奶茶挺好喝。
-以冷淡程序员口吻修复这段 Python；先给正确代码，再用三级技术递归解释边界。
-继续聊刚才的问题。（保留上一轮的人设、级别与风格）
-现在不要防御性了，正常回答。
-```
+> 我觉得这个插件确实挺好用的，但“好用”只是对目前使用感受的评价，并不是说它适合所有人，更不能理解成其他插件就没有价值。当然，我强调这一点，也不是在暗示这个插件有我尚未说出口的问题，更不是说我认为有人会把我的评价理解成对其他开发者的否定。即使我提前解释了这些，也不代表这份解释已经覆盖了所有可能出现的误解；不过，没覆盖所有误解，也不等于最初那句“挺好用”就没有意义。
 
-### 场景目录、回归与语义评审
+这个 Skill 的笑点在于**一本正经地过度谨慎**，不是主动告诉读者“我在整活”。可以使用逻辑套娃，但不能捏造真实指责、测试结果或事件。
 
-```bash
-python -m unittest discover -s tests -p 'test_*.py' -v
-python scripts/evaluate.py --self-test
-python scripts/evaluate.py --catalog tests/cases.json --json
-python scripts/evaluate.py --batch tests/sample_responses.json --json
-```
+## v3.3 的重点
 
-测试库目前有 **64 例**：原有 22 条短句 + 12 条真实问答 + 12 条角色融合 + 8 组多轮对话 + 10 条复杂边界。角色测试覆盖图书管理员、程序员、朋友、客服、学术作者、叙事人物、英语口语等不同语域；只留 2 例原始角色场景用于定向回归，避免单一角色示例过拟合。为单轮条目填入 response，或为多轮逐项填写 turns[].response 后，才可用 --batch 做表面检查。--catalog 仅校验测试目录，不会生成模型回答，也不等于 64 例通过。
+| 能力 | 行为 |
+| --- | --- |
+| **0–5 级防御强度** | 从正常直说到连免责声明都要免责，默认三级 |
+| **任务优先** | 先回答问题或完成代码等实际任务，再融入防御 |
+| **语言人格保持（voice）** | 沿用当前语域、词汇、句法、节奏、情绪与称呼，不靠强塞口癖维持人设 |
+| **防御逻辑（style）** | GPT 经典、法务免责、公关和稀泥、技术递归、道德审慎，可混合 |
+| **荒诞度（absurdity）** | 0–5，控制“小题大做”的程度，默认 0 |
+| **自知度（self_awareness）** | 0–5，控制是否察觉自己的过度辩解，默认 0 |
+| **多轮继承与退出** | 延续此前已明确的设置；说“不要防御性”即切到 0 级 |
 
-外部语义评审见 references/judge-rubric.md：Rewrite 沿用旧版六维评分；Respond/Task/Persona 可以使用 rubric=context-v3.3，从任务完成度、事实、人设连续性、防御融合、递归逻辑和约束适配六个维度评审。脚本只接收外部评审 JSON，不能替代真实模型或人工理解语义。
+### 三种任务模式 + 一层角色融合
+
+- **Rewrite（改写）**：对现有文字做防御性改写，保留原意和事实。短句默认单段。
+- **Respond（回答）**：正常回答用户的问题，将防御放在对应解释附近，不另外附上一份正式免责声明。
+- **Task（执行）**：修代码、排障、写方案、回复 Issue 等，首先交付实际成果；不凭空添加门禁、快照、哈希、烟测等未要求的工程流程。
+- **Persona（角色融合）**：可叠加于上述模式。由当前角色自己的说话习惯完成辩解，而不是“角色化开场—公文正文—角色化结尾”。
+
+**voice 是表达方式，style 是防御机制**。没有指定人设时沿用当前正常语气，不自动扮演任何固定角色。
 
 ## 安装
 
-把整个 `defensive-writing-expression/` 文件夹复制到支持 Agent Skills 的 `skills` 目录；保留下面全部文件。入口为 `SKILL.md`。默认不主动启用，只有用户明确要求此风格才激活。
-
-## 快速调用
-
-```text
-三级 GPT 经典型：我觉得这个项目不错。
-五级技术递归，误读 6、递归 3：文件哈希校验通过。
-五级技术递归：新版本上线后，接口响应快了不少。
-50字以内，五级技术递归：接口响应快了不少。
-三级，共情 0，和稀泥 0，免责密度 5：Python 容易入门。
-```
-
-## 文件结构
-
-```text
-defensive-writing-expression/
-├── SKILL.md                  # 任务模式、人格泛化、防御融合与短文本降级
-├── README.md                 # 使用说明
-├── references/
-│   ├── patterns.md           # 误读递归、各语体表达机制与多轮继承
-│   ├── examples.md           # 跨语域、跨语言、不同任务的正反例
-│   └── judge-rubric.md       # 外部语义评审（含角色连续性及任务完成度）
-├── scripts/
-│   └── evaluate.py           # 表层统计、用例校验、多轮解析和评分文件检查
-└── tests/
-    ├── cases.json            # 64 项回归用例（22 旧 + 42 新，含对话场景）
-    ├── sample_responses.json # 已编写的基准示例，非真实模型测评结果
-    └── test_evaluate.py      # 标准库单元测试
-.github/workflows/
-    └── regression.yml        # CI 确定性回归检查
-```
-
-## 运行
+将仓库完整复制或克隆到支持 Agent Skills 的客户端的 Skills 目录，确保 `SKILL.md` 与 `references/`、`scripts/`、`tests/` 等文件保持原有相对位置。
 
 ```bash
-python scripts/evaluate.py --self-test
-python scripts/evaluate.py --level 0 --text '这个方案不错。'
-python scripts/evaluate.py --level 3 --text '我觉得不错，但这并不意味着所有人都会喜欢，也不是说其他方案没有价值。'
-python scripts/evaluate.py --batch tests/sample_responses.json --json
-python scripts/evaluate.py --file response.txt --level 5 --judge-json review.json --json
+git clone https://github.com/sl251/defensive-writing-expression.git
 ```
 
-`--batch` 支持读取 `[{"id":"...", "level":3, "text":"..."}]`、`{"outputs":[...]}` 或已填入 `"response"` 字段的 `{"cases":[...]}`，自动输出逐条特征、断言核验结果以及跨样本首尾句式重复度汇总。`--judge-json` 读取另一模型或人工评审提交的六维 0–5 分 JSON，计算加权分，不会自动连接模型或生成评审。
+各客户端的 Skills 目录位置不同，入口文件为 `SKILL.md`。**默认不会主动启用**；需要明确请求防御性表达或使用该 Skill。
+
+## 使用方法
+
+直接用自然语言描述，不必记固定命令。
+
+```text
+三级 GPT 经典型：这个插件修好了。
+五级技术递归，误读 6、递归 3：哈希校验通过。
+五级，absurdity 5，self_awareness 0：这杯奶茶挺好喝。
+沿用刚才的聊天语气，五级防御地解释这个脚本。
+保持冷淡程序员的口吻，三级防御地修复下面的 Python 错误，先给代码。
+50 字以内，五级技术递归：接口响应快了不少。
+接着解释。（延续已明确的等级、人设与风格）
+现在正常回答，不要防御性了。（退出）
+```
+
+**默认设置**：三级、GPT 经典型；`absurdity=0`、`self_awareness=0`。只更改一个参数时，其他明确设置保持不变。显式字数上限优先；过短文本会压缩防御链，而不是强行扩写。
+
+### 生成原则
+
+1. **观点和事实不能偷换**：改写不能凭空编造原文没有的测试、监控、日志、合同等实体；问答可引用有依据的上下文事实。
+2. **先完成任务**：技术问题要给答案，代码任务要给代码；防御性不能代替有效结果。
+3. **防御与正文融合**：在对应观点附近预判误读、限定边界、澄清澄清本身；避免整段模板化公文。
+4. **保持同一说话者**：语域、句长、情绪、态度和关系在全文及多轮中保持连贯。
+5. **关键场景清晰优先**：紧急处置和真实故障排障不被夸张免责耽误。
+
+详细规则在 [SKILL.md](SKILL.md)，扩展机制及正反例在 [references/patterns.md](references/patterns.md) 和 [references/examples.md](references/examples.md)。
+
+## 测试与评审
+
+仓库包含 **64 条测试场景**：22 条基础改写 + 12 条真实回答 + 12 条角色融合 + 8 组多轮对话 + 10 条复杂边界；其中只保留两例原始角色定向回归，其余用于检验跨语域泛化。
+
+```bash
+# Python 标准库即可运行，无额外依赖
+python -m unittest discover -s tests -p 'test_*.py' -v
+python scripts/evaluate.py --self-test
+
+# 校验测试用例目录结构（不生成模型回答）
+python scripts/evaluate.py --catalog tests/cases.json --json
+
+# 分析已写好的示例输出
+python scripts/evaluate.py --batch tests/sample_responses.json --json
+
+# 检查单段文本的表面防御特征
+python scripts/evaluate.py --level 3 --text '这方案不错，但不代表适合每个人。'
+```
+
+`--batch` 接受输出数组、`{"outputs":[...]}` 或已填写 `response` 的 `{"cases":[...]}`；多轮对话可逐项填写 `turns[].response`。它能统计防御标记、关键词留存、部分确定性约束和跨样本开头/结尾重复情况。
+
+**评测器不是语言模型**：`--catalog` 通过只表示用例结构有效，**不表示 64 条真实模型回答全部通过**。任务完成度、人设连续性、语言自然度及深层语义需要人工或外部模型评审。评审规则见 [references/judge-rubric.md](references/judge-rubric.md)：旧版 Rewrite 六维评分继续兼容，新版 `context-v3.3` 对 Respond / Persona / Task 提供上下文评分协议。`--judge-json` 仅读取外部提供的评分文件。
+
+GitHub Actions 会在推送及 PR 时执行语法检查、单元测试、自测和场景目录检查。
+
+## 仓库结构
+
+```text
+.
+├── SKILL.md
+├── README.md
+├── assets/
+│   └── defensive-writing-map.jpg
+├── references/
+│   ├── patterns.md
+│   ├── examples.md
+│   └── judge-rubric.md
+├── scripts/
+│   └── evaluate.py
+├── tests/
+│   ├── cases.json
+│   ├── sample_responses.json
+│   └── test_evaluate.py
+└── .github/workflows/
+    └── regression.yml
+```
+
+该项目是一种刻意夸张的写作风格实验，不是事实核查或真实法律免责声明工具。
