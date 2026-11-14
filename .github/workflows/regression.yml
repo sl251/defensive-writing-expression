@@ -1,0 +1,23 @@
+name: Regression tests
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+
+jobs:
+  evaluator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Syntax
+        run: python -m py_compile scripts/evaluate.py tests/test_evaluate.py
+      - name: Evaluator unit tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Existing evaluator self-test
+        run: python scripts/evaluate.py --self-test
+      - name: Scenario catalog schema
+        run: python scripts/evaluate.py --catalog tests/cases.json --json

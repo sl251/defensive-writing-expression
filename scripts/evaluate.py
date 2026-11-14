@@ -3,6 +3,7 @@
 deliberately defensive Chinese writing (stdlib only).
 
 This script does NOT generate text, access an LLM, or verify deep semantic fidelity.
+Scenario and conversation reports are metadata and deterministic text checks, not persona-quality judgments.
 A separately obtained human/LLM judge report can be validated and combined via
 --judge-json. The resulting semantic score is from THAT reviewer, not this script.
 """
@@ -49,6 +50,14 @@ JUDGE_WEIGHTS = {
     "recursive_logic": 15,
     "naturalness": 15,
     "target_fit": 10,
+}
+CONTEXT_JUDGE_WEIGHTS = {
+    "task_completion": 25,
+    "factual_integrity": 20,
+    "persona_continuity": 20,
+    "defensive_integration": 15,
+    "recursive_logic": 15,
+    "target_fit": 5,
 }
 TARGETS = {0: (0, 0), 1: (0, 2), 2: (1, 4), 3: (2, 6), 4: (4, 10), 5: (5, 16)}
 
@@ -245,11 +254,15 @@ def evaluate_external_judge(review: dict[str, Any]) -> dict[str, Any]:
     """Validate a review supplied by a DIFFERENT reviewer; never create it."""
     if not isinstance(review, dict) or not isinstance(review.get("scores"), dict):
         raise ValueError("judge JSON requires an object with a scores object")
+    rubric = review.get("rubric", "legacy-rewrite")
+    if rubric not in ("legacy-rewrite", "context-v3.3"):
+        raise ValueError("judge.rubric must be legacy-rewrite or context-v3.3")
+    weights = CONTEXT_JUDGE_WEIGHTS if rubric == "context-v3.3" else JUDGE_WEIGHTS
     scores = review["scores"]
-    absent = set(JUDGE_WEIGHTS) - set(scores)
+    absent = set(weights) - set(scores)
     if absent:
         raise ValueError("judge JSON missing scores: " + ", ".join(sorted(absent)))
-    for name in JUDGE_WEIGHTS:
+    for name in weights:
         score = scores[name]
         if isinstance(score, bool) or not isinstance(score, (int, float)) or not 0 <= score <= 5:
             raise ValueError(f"judge score {name!r} must be a number from 0 to 5")
@@ -262,20 +275,89 @@ def evaluate_external_judge(review: dict[str, Any]) -> dict[str, Any]:
             or not all(isinstance(x, str) for x in review[name])
         ):
             raise ValueError(f"judge.{name} must be an array of strings")
-    total = sum(scores[k] * w / 5 for k, w in JUDGE_WEIGHTS.items())
+    total = sum(scores[k] * w / 5 for k, w in weights.items())
+    thresholds = ("task_completion", "factual_integrity", "persona_continuity") if rubric == "context-v3.3" else ("claim_preservation", "factual_integrity")
     return {
         "source": "external reviewer, not script-inferred",
+        "rubric": rubric,
         "weighted_score_0_100": round(total, 1),
         "accepted": not veto
         and total >= 80
-        and scores["claim_preservation"] >= 4
-        and scores["factual_integrity"] >= 4,
+        and all(scores[name] >= 4 for name in thresholds),
         "veto": veto,
-        "scores": {k: scores[k] for k in JUDGE_WEIGHTS},
+        "scores": {k: scores[k] for k in weights},
         "issues": review.get("issues", []),
         "suggestions": review.get("suggestions", []),
         "caveat": "外部评分不等于事实已验证；其可信度取决于实际评审者和证据。",
     }
+
+
+def catalog_summary(path: Path) -> dict[str, Any]:
+    """Validate fixture metadata; unfilled model responses are NOT evaluated."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    rows = data.get("cases") if isinstance(data, dict) else data
+    if not isinstance(rows, list):
+        raise ValueError("catalog must be a JSON array or object with cases array")
+    scene_counts: Counter[str] = Counter()
+    mode_counts: Counter[str] = Counter()
+    identifiers: set[str] = set()
+    turn_count = 0
+    populated = 0
+    for i, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise ValueError(f"catalog item {i} must be object")
+        ident = row.get("id")
+        if not isinstance(ident, str) or not ident.strip() or ident in identifiers:
+            raise ValueError(f"catalog item {i} has missing or duplicated id")
+        identifiers.add(ident)
+        lvl = row.get("level", 3)
+        if type(lvl) is not int or lvl not in TARGETS:
+            raise ValueError(f"catalog item {ident} has invalid level")
+        scene = row.get("scene", "legacy-short-rewrite")
+        mode = row.get("mode", "Rewrite")
+        if mode not in ("Rewrite", "Respond", "Task", "Persona"):
+            raise ValueError(f"catalog item {ident} has invalid mode")
+        if not isinstance(scene, str) or not scene:
+            raise ValueError(f"catalog item {ident} has invalid scene")
+        scene_counts[scene] += 1
+        mode_counts[mode] += 1
+        turns = row.get("turns", [])
+        if not isinstance(turns, list):
+            raise ValueError(f"catalog item {ident} turns must be an array")
+        if turns and not all(isinstance(t, dict) and isinstance(t.get("user"), str) for t in turns):
+            raise ValueError(f"catalog item {ident} turns must have user text")
+        if not turns and not isinstance(row.get("input"), str):
+            raise ValueError(f"catalog item {ident} needs input or turns")
+        turn_count += len(turns)
+        populated += sum(bool(t.get("response")) for t in turns) if turns else int(bool(row.get("response")))
+    return {
+        "catalog_cases": len(rows),
+        "scenario_counts": dict(sorted(scene_counts.items())),
+        "mode_counts": dict(sorted(mode_counts.items())),
+        "conversation_turns_defined": turn_count,
+        "populated_response_count": populated,
+        "semantic_scores_computed": False,
+        "caveat": "目录校验不代表模型生成或语义评审已通过。",
+    }
+
+
+def check_scene_constraints(text: str, row: dict[str, Any]) -> dict[str, Any]:
+    """Check only explicit literal assertions, never infer persona continuity."""
+    checks = row.get("checks", {})
+    if not isinstance(checks, dict):
+        raise ValueError("checks must be an object")
+    failures: list[str] = []
+    for key in ("must_contain_all", "must_contain_any", "must_not_contain"):
+        values = checks.get(key, [])
+        if not isinstance(values, list) or not all(isinstance(v, str) and v for v in values):
+            raise ValueError(f"checks.{key} must be a list of nonempty strings")
+        if key == "must_contain_all":
+            failures.extend(f"required text absent: {v}" for v in values if v not in text)
+        elif key == "must_contain_any" and values and not any(v in text for v in values):
+            failures.append("none of must_contain_any found")
+        elif key == "must_not_contain":
+            failures.extend(f"forbidden text found: {v}" for v in values if v in text)
+    return {"passed": not failures, "violations": failures, "scope": "literal assertions only"}
 
 
 def load_outputs(path: Path) -> list[dict[str, Any]]:
@@ -293,13 +375,40 @@ def load_outputs(path: Path) -> list[dict[str, Any]]:
     for index, row in enumerate(data):
         if not isinstance(row, dict):
             raise ValueError(f"batch item {index} must be an object")
+        turns = row.get("turns")
+        if turns is not None:
+            if not isinstance(turns, list) or not turns:
+                raise ValueError(f"batch item {index} turns must be nonempty array")
+            for turn_index, turn in enumerate(turns):
+                if not isinstance(turn, dict) or not isinstance(turn.get("user"), str):
+                    raise ValueError(f"batch item {index} turn {turn_index} must have user text")
+                body = turn.get("text") if isinstance(turn.get("text"), str) else turn.get("response")
+                if not isinstance(body, str) or not body.strip():
+                    if is_cases:
+                        continue
+                    raise ValueError(f"batch item {index} turn {turn_index} missing response")
+                level = turn.get("level", row.get("level", 3))
+                if type(level) is not int or level not in TARGETS:
+                    raise ValueError(f"batch item {index} turn {turn_index} invalid level")
+                normalized.append({
+                    **row, **turn,
+                    "id": f"{row.get('id', index)}#turn{turn_index+1}",
+                    "conversation_id": row.get("id", str(index)),
+                    "turn_index": turn_index + 1,
+                    "mode": turn.get("mode", row.get("mode", "Respond")),
+                    "voice": turn.get("voice", row.get("voice")),
+                    "input": turn["user"],
+                    "text": body,
+                    "level": level,
+                })
+            continue
         text = row.get("text") if isinstance(row.get("text"), str) else row.get("response")
         if not isinstance(text, str) or not text.strip():
             if is_cases:
                 continue
             raise ValueError(f"batch item {index} requires text or response string")
         level = row.get("level", 3)
-        if level not in TARGETS:
+        if type(level) is not int or level not in TARGETS:
             raise ValueError(f"batch item {index} has invalid level {level!r}")
         normalized.append({**row, "text": text, "level": level})
     if is_cases and not normalized:
@@ -354,6 +463,16 @@ def self_test() -> None:
     review["scores"]["factual_integrity"] = 5
     review["veto"] = True
     assert not evaluate_external_judge(review)["accepted"]
+    context_review = {"rubric": "context-v3.3", "scores": {k: 5 for k in CONTEXT_JUDGE_WEIGHTS}}
+    assert evaluate_external_judge(context_review)["accepted"]
+    context_review["scores"]["persona_continuity"] = 2
+    assert not evaluate_external_judge(context_review)["accepted"]
+    context_review["scores"]["persona_continuity"] = 5
+    assert evaluate_external_judge(context_review)["weighted_score_0_100"] == 100
+    assert check_scene_constraints("喵，我解释一下。", {"checks": {"must_contain_any": ["喵", "咪"]}})["passed"]
+    assert not check_scene_constraints("纯公文", {"checks": {"must_contain_any": ["喵"]}})["passed"]
+    catalog = catalog_summary(Path(__file__).resolve().parent.parent / "tests" / "cases.json")
+    assert catalog["catalog_cases"] >= 64 and catalog["conversation_turns_defined"] >= 24
 
     fixtures = Path(__file__).resolve().parent.parent / "tests" / "sample_responses.json"
     assert len(load_outputs(fixtures)) >= 6
@@ -366,6 +485,7 @@ def main() -> None:
     source.add_argument("--text", help="Response text")
     source.add_argument("--file", type=Path, help="UTF-8 response file")
     source.add_argument("--batch", type=Path, help="Batch responses as JSON array, {outputs:[...]}, or {cases:[...]}")
+    source.add_argument("--catalog", type=Path, help="Validate case metadata without evaluating unfilled responses")
     parser.add_argument("--level", type=int, choices=range(0, 6), default=3)
     parser.add_argument("--judge-json", type=Path, help="EXTERNALLY generated semantic reviewer JSON")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
@@ -373,6 +493,13 @@ def main() -> None:
     args = parser.parse_args()
     if args.self_test:
         self_test()
+        return
+    if args.catalog:
+        try:
+            summary = catalog_summary(args.catalog)
+        except (ValueError, OSError, json.JSONDecodeError) as e:
+            parser.error(str(e))
+        print(json.dumps(summary, ensure_ascii=False, indent=2) if args.json else summary)
         return
     if sum(x is not None for x in (args.text, args.file, args.batch)) != 1:
         parser.error("Provide exactly one of --text, --file, or --batch")
@@ -384,7 +511,10 @@ def main() -> None:
             for i, item in enumerate(outputs):
                 lvl = item.get("level", args.level)
                 result: dict[str, Any] = {"id": item.get("id", str(i)), **analyze(item["text"], lvl)}
-                if "preserve" in item or "input" in item:
+                for key in ("scene", "mode", "voice", "conversation_id", "turn_index"):
+                    if key in item:
+                        result[key] = item[key]
+                if item.get("mode", "Rewrite") == "Rewrite" and ("preserve" in item or "input" in item):
                     result["preserve_check"] = check_preserve_retention(
                         item["text"],
                         str(item.get("preserve", "")),
@@ -399,6 +529,8 @@ def main() -> None:
                         item.get("overrides"),
                         str(item.get("guardrail", "")),
                     )
+                if "checks" in item:
+                    result["scene_check"] = check_scene_constraints(item["text"], item)
                 if judge is not None:
                     if not isinstance(judge, dict) or result["id"] not in judge:
                         raise ValueError(f"missing external judge report for batch id {result['id']}")
@@ -407,6 +539,9 @@ def main() -> None:
             out: Any = {
                 "count": len(results),
                 "cross_sample_diversity": analyze_cross_sample_diversity(outputs),
+                "scenario_counts_evaluated": dict(sorted(Counter(x.get("scene", "legacy-short-rewrite") for x in outputs).items())),
+                "conversation_ids_evaluated": sorted({str(x["conversation_id"]) for x in outputs if "conversation_id" in x}),
+                "caveat": "角色连续性、任务完成度、对话继承和语义正确性必须由独立模型或人工评审。",
                 "results": results,
             }
         else:

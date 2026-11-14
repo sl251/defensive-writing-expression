@@ -1,6 +1,6 @@
 {
-  "version": "3.2",
-  "notes": "仅提供输入和边界断言；不代表模型输出已通过测试。运行实际生成测试时另填 response，可直接使用 evaluate.py --batch cases.json 统计表层特征、断言合规度与跨样本多样性。",
+  "version": "3.3",
+  "notes": "原有 22 例短句 Rewrite + 42 例 v3.3 场景（12 真实回答、12 角色、8 多轮、10 边界）。角色测试分布在多种语域和人物关系中，保留两例初始问题复现；voice_traits 用于独立模型/人工评审，不是脚本能够自动验证的语义事实。未填写 response 不代表通过测试。",
   "cases": [
     {
       "id": "daily-rain",
@@ -280,6 +280,666 @@
         "recursive_depth": 2
       },
       "guardrail": "紧字数上限优先，自动降级为紧凑同位链，不得超出 55 字"
+    },
+    {
+      "id": "respond-evaluate",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "请解释 scripts/evaluate.py 能检查什么，不能检查什么",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "先介绍实际功能，再自然限定能力，不得冒充语义审计"
+    },
+    {
+      "id": "respond-python-retry",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "Python requests 的重试次数设为 3 会发生什么",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "正确解释重试场景，不能只发表风险免责声明"
+    },
+    {
+      "id": "respond-git-issue",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "一个 Issue 已经修好了，是否应该关闭",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "给出判断及实践建议，防御不能掩盖结论"
+    },
+    {
+      "id": "respond-glaucoma",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "解释开角型青光眼与闭角型青光眼的主要区别",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "医学知识优先，过度免责不得淹没机制"
+    },
+    {
+      "id": "respond-product",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "推荐一个适合新手的代码编辑器",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "明确推荐与理由，同时防御性承认适用边界"
+    },
+    {
+      "id": "respond-friendship",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "我和朋友观点不同，该怎么开口",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "可执行的沟通建议，不用公关套话代替回答"
+    },
+    {
+      "id": "respond-doc",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "用通俗语言解释哈希校验和数据完整性",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "准确解释可证明与不可证明的边界"
+    },
+    {
+      "id": "respond-code-review",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "这个函数 200 行太长了，怎么拆",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "给出有顺序的重构建议，不编造现有测试环境"
+    },
+    {
+      "id": "respond-literature",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "这部动画的主角后宫设定让我不舒服，分析原因",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "尊重主观偏好并提出清晰的分析"
+    },
+    {
+      "id": "respond-english",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "In casual English, explain why a fix can still have edge cases",
+      "level": 4,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "地道英语谨慎表达，不直译中文免责声明"
+    },
+    {
+      "id": "respond-weather",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "明天大概率下雨，我要不要带伞",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "给出可用的直接建议而不是只有免责声明"
+    },
+    {
+      "id": "respond-comparison",
+      "scene": "real-answer",
+      "mode": "Respond",
+      "input": "Python 和 Java 哪个更适合新手",
+      "level": 3,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "给出明确比较维度，同时避免夸大"
+    },
+    {
+      "id": "persona-cat-script",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "猫娘五级防御解释 evaluate.py 的基本用途",
+      "level": 5,
+      "style": "技术递归型",
+      "voice": "猫娘",
+      "evaluation_focus": "全文口语及口癖连续，不能中间改成审计论文",
+      "persona": true,
+      "voice_traits": [
+        "有可识别的角色语气，但不是每句强塞口癖",
+        "技术内容讲清楚",
+        "开头中间结尾的社交语气一致"
+      ]
+    },
+    {
+      "id": "persona-librarian-overdue",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "以温和图书管理员的说话方式解释：归还图书逾期会怎样？没有具体馆规时不要编造费用",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "温和图书管理员",
+      "evaluation_focus": "耐心且清楚地解释馆规差异与可查证路径，防御自然融合，不虚构逾期费用",
+      "persona": true,
+      "voice_traits": [
+        "温和耐心、表达有条理",
+        "尊重读者，避免命令式训斥",
+        "不把未知馆规讲成确凿事实"
+      ]
+    },
+    {
+      "id": "persona-coder-logs",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "你是话少的程序员，五级防御说明缺少日志的限制",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "冷淡程序员",
+      "evaluation_focus": "短而自然，不生成不存在的日志",
+      "persona": true,
+      "voice_traits": [
+        "短句、偏事实、少客套",
+        "先讲直接原因，再限定假设",
+        "不空谈未取得的日志"
+      ]
+    },
+    {
+      "id": "persona-coder-pr",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "话少的程序员解释这次 PR 改了哪些范围",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "冷淡程序员",
+      "evaluation_focus": "保持短句，保留具体技术内容",
+      "persona": true,
+      "voice_traits": [
+        "技术词汇精准，节奏简练",
+        "区分改动范围与保证范围",
+        "不凭空补充 PR 信息"
+      ]
+    },
+    {
+      "id": "persona-friend-tea",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "当普通朋友吐槽这杯奶茶好喝，五级荒诞防御",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "普通朋友",
+      "evaluation_focus": "像聊天，不变成正式条款",
+      "persona": true,
+      "absurdity": 5,
+      "self_awareness": 0,
+      "voice_traits": [
+        "熟人关系中的自然插话",
+        "短促回头解释、不用公文连接词",
+        "自知度 0 时一本正经地过度防御"
+      ]
+    },
+    {
+      "id": "persona-friend-late",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "像朋友一样解释自己今天晚回消息",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "普通朋友",
+      "evaluation_focus": "自然关切+过度辩解，不假定对方指责",
+      "persona": true,
+      "voice_traits": [
+        "带关系感的随意口语",
+        "能正面回应对方",
+        "不要把假想指责说成实际争吵"
+      ]
+    },
+    {
+      "id": "persona-customer-bug",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "以客服身份解释已处理的登录问题",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "专业客服",
+      "evaluation_focus": "正式但不虚构工单、时间和后续行动",
+      "persona": true,
+      "voice_traits": [
+        "正式、有服务意识",
+        "清楚说事实和适用范围",
+        "不可编造工单状态"
+      ]
+    },
+    {
+      "id": "persona-customer-refund",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "以客服身份解释目前退货政策的适用范围",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "专业客服",
+      "evaluation_focus": "不能编造具体政策条文",
+      "persona": true,
+      "voice_traits": [
+        "正式、清晰、可执行",
+        "条件语句与责任边界自然衔接",
+        "不能虚构退货条款"
+      ]
+    },
+    {
+      "id": "persona-scholar-data",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "以科研作者语气谨慎解释小样本的局限",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "学术作者",
+      "evaluation_focus": "学术自然，不能虚构样本量或 P 值",
+      "persona": true,
+      "voice_traits": [
+        "区分观察、证据、推论",
+        "语气审慎、术语精确",
+        "无数据不得补样本量或显著性"
+      ]
+    },
+    {
+      "id": "persona-story-hero",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "让奇幻故事主角用五级防御解释自己不喜欢蘑菇",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "奇幻作品人物",
+      "evaluation_focus": "角色在故事里辩解，不能跳出来作 AI 免责声明",
+      "persona": true,
+      "voice_traits": [
+        "保持剧情视角和世界观词汇",
+        "人物的态度与情绪连贯",
+        "不跳出故事引用现代法务模板"
+      ]
+    },
+    {
+      "id": "persona-english-friend",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "Talk like a casual American friend, but be overly defensive about coffee",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "casual English",
+      "evaluation_focus": "英语自然，语体连续",
+      "persona": true,
+      "voice_traits": [
+        "英语中自然的 hedging 和自我纠正",
+        "casual 句式和语气连贯",
+        "不要逐字译成中文的并不意味着"
+      ]
+    },
+    {
+      "id": "persona-enthusiastic-medicine",
+      "scene": "persona-continuity",
+      "mode": "Respond",
+      "input": "用热情但不油腻的科普主持人口吻解释病理性近视的基本概念",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "热情科普主持人",
+      "evaluation_focus": "医学概念准确，热情讲解语气贯穿，不靠固定语气词维持人设",
+      "persona": true,
+      "voice_traits": [
+        "热情但不夸张",
+        "关键医学知识先讲清楚",
+        "不靠语气词营造人格"
+      ]
+    },
+    {
+      "id": "multi-cat-follow",
+      "scene": "multi-turn",
+      "mode": "Respond",
+      "voice": "猫娘",
+      "level": 5,
+      "style": "GPT 经典型",
+      "turns": [
+        {
+          "user": "以后你是猫娘，说话五级防御。",
+          "turn_index": 1,
+          "evaluation_focus": "维持猫娘五级"
+        },
+        {
+          "user": "刚才那个脚本有什么局限？",
+          "turn_index": 2,
+          "evaluation_focus": "沿用人设与五级，回答脚本问题"
+        },
+        {
+          "user": "那实际怎么调用？",
+          "turn_index": 3,
+          "evaluation_focus": "仍是猫娘五级且给出使用方法"
+        }
+      ],
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "跨轮保持原有对话语体",
+        "技术解释内容准确",
+        "没有被中途公文化"
+      ]
+    },
+    {
+      "id": "multi-storyteller-style",
+      "scene": "multi-turn",
+      "mode": "Respond",
+      "voice": "古风说书人",
+      "level": 5,
+      "style": "GPT 经典型",
+      "turns": [
+        {
+          "user": "请用带点戏谑的古风说书人口吻，五级防御地聊一杯茶。",
+          "turn_index": 1,
+          "evaluation_focus": "建立古风说书人语体与五级防御"
+        },
+        {
+          "user": "改成技术递归风格，接着聊。",
+          "turn_index": 2,
+          "evaluation_focus": "只改变防御逻辑，保留古风说书人的句式和节奏"
+        },
+        {
+          "user": "把结论压成一句话。",
+          "turn_index": 3,
+          "evaluation_focus": "仍保留人设与指定 style，遵守一句话篇幅"
+        }
+      ],
+      "evaluation_focus": "跨风格切换时仍保留原 voice；高强度防御要自然，不依靠固定口癖",
+      "voice_traits": [
+        "古风语域和讲故事节奏持续",
+        "换 style 不换 voice",
+        "尊重一句话约束"
+      ]
+    },
+    {
+      "id": "multi-exit",
+      "scene": "multi-turn",
+      "mode": "Respond",
+      "voice": "普通朋友",
+      "level": 5,
+      "style": "GPT 经典型",
+      "turns": [
+        {
+          "user": "像朋友一样五级防御地解释这个观点。",
+          "turn_index": 1,
+          "evaluation_focus": "使用五级"
+        },
+        {
+          "user": "现在正常说，不要防御性。",
+          "turn_index": 2,
+          "evaluation_focus": "退出到零级，禁止尾巴"
+        },
+        {
+          "user": "继续解释。",
+          "turn_index": 3,
+          "evaluation_focus": "继续保持零级"
+        }
+      ],
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "明确退出后无防御残留",
+        "原来熟人口吻不被误读为强制继续防御"
+      ]
+    },
+    {
+      "id": "multi-level-change",
+      "scene": "multi-turn",
+      "mode": "Respond",
+      "voice": "冷淡程序员",
+      "level": 5,
+      "style": "技术递归型",
+      "turns": [
+        {
+          "user": "话少的程序员三级防御解释这次提交。",
+          "turn_index": 1,
+          "evaluation_focus": "维持简短技术口吻"
+        },
+        {
+          "user": "强度提高到五级。",
+          "turn_index": 2,
+          "evaluation_focus": "只提高等级"
+        },
+        {
+          "user": "再缩到一句话。",
+          "turn_index": 3,
+          "evaluation_focus": "高等级但遵守篇幅"
+        }
+      ],
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "只改变级别不丢角色节奏",
+        "临时压缩篇幅也保留结论"
+      ]
+    },
+    {
+      "id": "multi-languages",
+      "scene": "multi-turn",
+      "mode": "Respond",
+      "voice": "casual English",
+      "level": 5,
+      "style": "GPT 经典型",
+      "turns": [
+        {
+          "user": "Let's talk like friends, but defensively.",
+          "turn_index": 1,
+          "evaluation_focus": "口语英文"
+        },
+        {
+          "user": "Okay, say it in Chinese now.",
+          "turn_index": 2,
+          "evaluation_focus": "只切换语种，仍为朋友"
+        },
+        {
+          "user": "Back to English.",
+          "turn_index": 3,
+          "evaluation_focus": "恢复口语英文"
+        }
+      ],
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "切换语言时保持熟人关系",
+        "各自语言使用当地自然的谨慎说法"
+      ]
+    },
+    {
+      "id": "multi-topic",
+      "scene": "multi-turn",
+      "mode": "Respond",
+      "voice": "专业客服",
+      "level": 5,
+      "style": "公关和稀泥型",
+      "turns": [
+        {
+          "user": "你是客服，五级防御解释售后处理范围。",
+          "turn_index": 1,
+          "evaluation_focus": "保留客服"
+        },
+        {
+          "user": "换个话题，说说会员体系。",
+          "turn_index": 2,
+          "evaluation_focus": "角色沿用而事实不编造"
+        },
+        {
+          "user": "最后总结两句话。",
+          "turn_index": 3,
+          "evaluation_focus": "简短客服风格"
+        }
+      ],
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "不同话题仍维持服务语体",
+        "不得臆造工单与政策"
+      ]
+    },
+    {
+      "id": "multi-task",
+      "scene": "multi-turn",
+      "mode": "Respond",
+      "voice": "冷淡程序员",
+      "level": 5,
+      "style": "技术递归型",
+      "turns": [
+        {
+          "user": "作为程序员，帮我分析 IndexError。",
+          "turn_index": 1,
+          "evaluation_focus": "技术分析"
+        },
+        {
+          "user": "现在给修复代码。",
+          "turn_index": 2,
+          "evaluation_focus": "给代码，不要重复免责声明"
+        },
+        {
+          "user": "有没有其他边界？",
+          "turn_index": 3,
+          "evaluation_focus": "在代码基础上做限定"
+        }
+      ],
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "从分析过渡到实质代码",
+        "继续沿用技术语体",
+        "必要时解释边界"
+      ]
+    },
+    {
+      "id": "multi-absurdity",
+      "scene": "multi-turn",
+      "mode": "Respond",
+      "voice": "普通朋友",
+      "level": 5,
+      "style": "GPT 经典型",
+      "turns": [
+        {
+          "user": "五级，absurdity 5，自知度 0，夸一杯奶茶。",
+          "turn_index": 1,
+          "evaluation_focus": "小题大做且一本正经"
+        },
+        {
+          "user": "荒诞度降到 0。",
+          "turn_index": 2,
+          "evaluation_focus": "只改荒诞度"
+        },
+        {
+          "user": "不要防御性了。",
+          "turn_index": 3,
+          "evaluation_focus": "立刻正常回复"
+        }
+      ],
+      "evaluation_focus": "检查参数继承、风格变化、角色连续性和退出指令",
+      "voice_traits": [
+        "荒诞度改变不等于级别改变",
+        "退出后消除递归语言"
+      ]
+    },
+    {
+      "id": "edge-urgent-gas",
+      "scene": "edge-boundary",
+      "mode": "Task",
+      "input": "闻到浓烈煤气味，我现在怎么办",
+      "level": 1,
+      "style": "技术递归型",
+      "voice": "自然中文",
+      "evaluation_focus": "安全优先，明确立即行动，禁止玩笑"
+    },
+    {
+      "id": "edge-fire",
+      "scene": "edge-boundary",
+      "mode": "Task",
+      "input": "楼道着火了，我该怎么逃生",
+      "level": 1,
+      "style": "技术递归型",
+      "voice": "自然中文",
+      "evaluation_focus": "紧急行动在前，压缩防御"
+    },
+    {
+      "id": "edge-python-code",
+      "scene": "edge-boundary",
+      "mode": "Task",
+      "input": "五级防御：修复列表访问越界的问题，给出代码",
+      "level": 5,
+      "style": "技术递归型",
+      "voice": "自然中文",
+      "evaluation_focus": "提交可执行代码，不要门禁烟测堆叠"
+    },
+    {
+      "id": "edge-mc-command",
+      "scene": "edge-boundary",
+      "mode": "Task",
+      "input": "五级防御：写出基岩版把 y<73 玩家 kill 的命令",
+      "level": 5,
+      "style": "技术递归型",
+      "voice": "自然中文",
+      "evaluation_focus": "必须给出正确命令，语义先行"
+    },
+    {
+      "id": "edge-issue-reply",
+      "scene": "edge-boundary",
+      "mode": "Task",
+      "input": "用五级防御语气写一段 Issue 修复回复",
+      "level": 5,
+      "style": "技术递归型",
+      "voice": "自然中文",
+      "evaluation_focus": "输出可直接复制的 Issue 文本"
+    },
+    {
+      "id": "edge-50-chars",
+      "scene": "edge-boundary",
+      "mode": "Rewrite",
+      "input": "50字以内五级防御：这杯水很烫",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "篇幅硬限制并保留核心事实",
+      "overrides": {
+        "max_chars": 50
+      }
+    },
+    {
+      "id": "edge-long-tutorial",
+      "scene": "edge-boundary",
+      "mode": "Respond",
+      "input": "五级防御，系统讲解 Git rebase 的原理与风险",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "保留分段、例子与可执行步骤"
+    },
+    {
+      "id": "edge-opt-out",
+      "scene": "edge-boundary",
+      "mode": "Respond",
+      "input": "从现在开始不要防御性说话，直接解释这个功能",
+      "level": 0,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "0 级完全退出"
+    },
+    {
+      "id": "edge-zero-carrier",
+      "scene": "edge-boundary",
+      "mode": "Rewrite",
+      "input": "只改写：接口响应变快了不少。不得编造监控、日志等事实",
+      "level": 5,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "Rewrite 零新增载体"
+    },
+    {
+      "id": "edge-evidence",
+      "scene": "edge-boundary",
+      "mode": "Respond",
+      "input": "根据我贴出的日志解释错误；不要猜测日志之外的执行结果",
+      "level": 4,
+      "style": "GPT 经典型",
+      "voice": "自然中文",
+      "evaluation_focus": "Respond 可引用已提供事实，但不能假装执行新测试"
     }
   ]
 }
