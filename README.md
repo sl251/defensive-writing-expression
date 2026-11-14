@@ -1,16 +1,50 @@
-# Defensive Writing & Expression v3.2
+# Defensive Writing & Expression v3.3
 
 一个刻意制造“GPT 式防御性表达”的中文 Agent Skill：让普通观点提前应付尚未出现的误读，甚至让免责声明需要再被免责声明澄清。
 
 ![防御性写作关系图：不能证明、并不等于、不是而是](assets/defensive-writing-map.jpg)
 
-## 核心特性（v3.2）
+## 核心特性（v3.3）
 
 - **零新增实体约束**：严格区分“有载体句”（如含测试/哈希/合同）与“纯陈述句”（如仅含主观体验或结果对比），高档位递归不再为了凑层数而凭空脑补监控、日志或统计流程。
 - **六级冲突优先级仲裁链与短文本降级**：明确 `安全清晰度 > 0 级退出 > 字数硬上限 > 单点覆盖 > 风格 > 档位默认` 裁决顺序；紧字数约束下自动切换为紧凑同位链（`A ≠ B ≠ C`）以兼顾篇幅与递归层数。
 - **增强型离线回归校验（`evaluate.py`）**：在原有表面标记统计基础上，新增 `cases.json` 核心词留存校验（`preserve` recall）、`overrides` / `guardrail` 合规审计，以及 `--batch` 跨样本首尾句式撞车检测。
 - **双层误读引擎与内置二次审查**：原观点 → 虚拟误读 → 澄清 → 对澄清的误读 → 元澄清（最多 3 层），内置防复读编辑自检。
 - **渐进式上下文加载**：常规 1–3 级仅加载 `SKILL.md`，高递归与诊断评测再按需读取 `references/`。
+
+## v3.3：上下文感知型防御
+
+这次升级处理的是“防御性有了，却没有和语言融合”的问题。过去用户让猫娘五级防御地解释脚本，输出容易出现“猫娘开头—审计报告正文—猫娘结尾”。现在先保持用户要完成的**真实任务和既有语言人格**，再让角色用自己的说话方式过度辩解。
+
+- **Rewrite（改写）**：严格保留原句和已有事实；零新增日志、测试、监控等载体，默认单段。
+- **Respond（回答）**：先解释问题，再把限定与元澄清交错放在相关观点旁边，不把问答变成完整免责声明。
+- **Task（执行）**：先交付可用代码、步骤、方案或回复；禁止用虚构的基线、探针、哈希、门禁、烟测代替修复。
+- **Persona（角色层）**：叠加在前三者上，贯穿全文和多轮对话。voice 控制口癖、词序、正式度和身份；style 只控制防御的论证机制。
+- **可选参数**：absurdity 0–5 控制小题大做的程度；self_awareness 0–5 控制角色是否意识到自己的过分谨慎；两个参数默认 0。
+- **退出**：“直说、不要防御性”立即降到 0 级，不残留“这并不意味着”的尾巴。
+
+### 真实场景调用
+
+```text
+猫娘人设，五级技术递归：解释 scripts/evaluate.py 的功能。
+五级，voice=普通朋友，absurdity=5，self_awareness=0：这杯奶茶挺好喝。
+以冷淡程序员口吻修复这段 Python；先给正确代码，再用三级技术递归解释边界。
+继续聊刚才的问题。（保留上一轮的人设、级别与风格）
+现在不要防御性了，正常回答。
+```
+
+### 场景目录、回归与语义评审
+
+```bash
+python -m unittest discover -s tests -p 'test_*.py' -v
+python scripts/evaluate.py --self-test
+python scripts/evaluate.py --catalog tests/cases.json --json
+python scripts/evaluate.py --batch tests/sample_responses.json --json
+```
+
+测试库目前有 **64 例**：原有 22 条短句 + 12 条真实问答 + 12 条角色融合 + 8 组多轮对话 + 10 条复杂边界。为单轮条目填入 response，或为多轮逐项填写 turns[].response 后，才可用 --batch 做表面检查。--catalog 仅校验测试目录，不会生成模型回答，也不等于 64 例通过。
+
+外部语义评审见 references/judge-rubric.md：Rewrite 沿用旧版六维评分；Respond/Task/Persona 可以使用 rubric=context-v3.3，从任务完成度、事实、人设连续性、防御融合、递归逻辑和约束适配六个维度评审。脚本只接收外部评审 JSON，不能替代真实模型或人工理解语义。
 
 ## 安装
 
@@ -30,7 +64,7 @@
 
 ```text
 defensive-writing-expression/
-├── SKILL.md                  # 核心指令，含优先级仲裁链、零新增实体规则与短文本降级
+├── SKILL.md                  # 核心指令，含任务模式、人设连续性、递归防御与短文降级
 ├── README.md                 # 使用说明
 ├── references/
 │   ├── patterns.md           # 十类误读、有/无载体双轨递归、六种宏观结构和多维参数
@@ -39,8 +73,11 @@ defensive-writing-expression/
 ├── scripts/
 │   └── evaluate.py           # 表层统计、preserve 留存校验、guardrail 检查与跨样本去重检测
 └── tests/
-    ├── cases.json            # 22 项回归用例（含无载体递归与短字数边界用例）
-    └── sample_responses.json # 已编写的基准示例，非真实模型测评结果
+    ├── cases.json            # 64 项回归用例（22 旧 + 42 新，含对话场景）
+    ├── sample_responses.json # 已编写的基准示例，非真实模型测评结果
+    └── test_evaluate.py      # 标准库单元测试
+.github/workflows/
+    └── regression.yml        # CI 确定性回归检查
 ```
 
 ## 运行
